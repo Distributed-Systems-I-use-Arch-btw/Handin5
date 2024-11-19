@@ -3,8 +3,8 @@ package server
 import (
 	proto "Handin5/grpc"
 	"context"
+	"fmt"
 	"google.golang.org/grpc"
-	"log"
 	"net"
 	"strconv"
 	"time"
@@ -53,26 +53,25 @@ func (s *Server) CreateClientIdentifier(ctx context.Context, in *proto.Empty) (*
 	return &proto.ClientId{Clientid: s.nrClients}, nil
 }
 
-func Run() {
+func Run(myPort int) {
 	server := &Server{
 		nrClients:  0,
 		highestBid: 0,
 		isOver:     false,
 	}
 
-	server.start_server()
+	server.start_server(myPort)
 }
 
-func (s *Server) start_server() {
-
+func (s *Server) start_server(myPort int) {
 	gRPCserver := grpc.NewServer()
 
-	log.Println("Server started")
-
-	netListener, err := net.Listen("tcp", ":5050")
+	netListener, err := net.Listen("tcp", fmt.Sprintf(":%d", myPort))
 	if err != nil {
 		panic(err)
 	}
+
+	fmt.Printf("Server started on port: %d \n", myPort)
 
 	proto.RegisterAuctionServer(gRPCserver, s)
 

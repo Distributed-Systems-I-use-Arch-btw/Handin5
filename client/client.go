@@ -7,25 +7,52 @@ import (
 	"fmt"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"log"
 	"os"
 	"strings"
+	"sync"
 )
 
+type clients struct {
+	clients []*clientInfo
+}
 type clientInfo struct {
 	client   proto.AuctionClient
 	clientId int32
 }
 
-func (c *clientInfo) Result() {
+func (c *clientInfo) Result(ctx context.Context, resultChan chan string, wg *sync.WaitGroup) {
+	defer wg.Done()
+
 	outcome, _ := c.client.Results(context.Background(), &proto.Empty{})
 
-	if outcome.Isover {
-		fmt.Println("Action is over!🔨")
-		fmt.Printf("Highest bid was: %d \n", outcome.Highestbid)
-	} else {
-		fmt.Println("Action is still going...")
-		fmt.Printf("Highest bid is: %d \n", outcome.Highestbid)
+	select {
+	case <-ctx.Done():
+		return
+	default:
+		if outcome.Isover {
+			resultChan <- fmt.Sprintf("Auction is over! 🔨\nHighest bid was: %d", outcome.Highestbid)
+		} else {
+			resultChan <- fmt.Sprintf("Auction is still going...\nHighest bid is: %d", outcome.Highestbid)
+		}
+	}
+}
+
+func (c *clients) fetchResults() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	resultChan := make(chan string, 1)
+	var wg sync.WaitGroup
+
+	for _, client := range c.clients {
+		wg.Add(1)
+		go client.Result(ctx, resultChan, &wg)
+	}
+
+	select {
+	case result := <-resultChan:
+		fmt.Println(result)
+		cancel()
 	}
 }
 
@@ -39,7 +66,7 @@ func (c *clientInfo) Bid(amount string) {
 	fmt.Println(ack)
 }
 
-func (c *clientInfo) Scanner() {
+func (c *clients) Scanner() {
 	reader := bufio.NewReader(os.Stdin)
 
 	for true {
@@ -50,23 +77,39 @@ func (c *clientInfo) Scanner() {
 		case "exit":
 			os.Exit(0)
 		case "result":
-			c.Result()
+			c.fetchResults()
 		default:
-			c.Bid(text)
+			for _, client := range c.clients {
+				go client.Bid(text)
+			}
 		}
 	}
 }
 
 func Run() {
-	conn, err := grpc.NewClient("localhost:5050", grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		log.Fatal(err)
+	clients := &clients{clients: make([]*clientInfo, 0)}
+	ports := []int{5050, 5051, 5052}
+
+	var conn *grpc.ClientConn
+	var err error
+	var client proto.AuctionClient
+
+	for _, port := range ports {
+		conn, err = grpc.NewClient(fmt.Sprintf("localhost:%d", port), grpc.WithTransportCredentials(insecure.NewCredentials()))
+		if err != nil {
+			continue
+		}
+
+		client = proto.NewAuctionClient(conn)
+
+		clients.clients = append(clients.clients, &clientInfo{client: client})
 	}
 
-	client := proto.NewAuctionClient(conn)
+	for _, client := range clients.clients {
+		var clientId *proto.ClientId
+		clientId, _ = client.client.CreateClientIdentifier(context.Background(), &proto.Empty{})
+		client.clientId = clientId.Clientid
+	}
 
-	cliId, err := client.CreateClientIdentifier(context.Background(), &proto.Empty{})
-	cliInfo := &clientInfo{client: client, clientId: cliId.Clientid}
-
-	cliInfo.Scanner()
+	clients.Scanner()
 }
