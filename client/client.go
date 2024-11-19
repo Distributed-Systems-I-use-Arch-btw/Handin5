@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strconv"
 	"strings"
 
 	"google.golang.org/grpc"
@@ -19,13 +18,27 @@ type clientInfo struct {
 	clientId int32
 }
 
-func (c *clientInfo) Bid(amount int32) {
-	variable, err := c.client.Bid(context.Background(), &proto.Amount{Amount: amount})
-	if err != nil {
-		panic("PANIC!")
+func (c *clientInfo) Result() {
+	outcome, _ := c.client.Results(context.Background(), &proto.Empty{})
+
+	if outcome.Isover {
+		fmt.Println("Action is over!🔨")
+		fmt.Printf("Highest bid was: %d \n", outcome.Highestbid)
+	} else {
+		fmt.Println("Action is still going...")
+		fmt.Printf("Highest bid is: %d \n", outcome.Highestbid)
 	}
-	fmt.Println(variable)
 }
+
+func (c *clientInfo) Bid(amount string) {
+	ack, _ := c.client.Bid(context.Background(), &proto.Amount{Amount: amount})
+	if ack.Ack == "Exception" {
+		fmt.Println("Not valid input")
+	}
+
+	fmt.Println(ack)
+}
+
 func (c *clientInfo) Scanner() {
 	reader := bufio.NewReader(os.Stdin)
 
@@ -36,15 +49,14 @@ func (c *clientInfo) Scanner() {
 		switch text {
 		case "exit":
 			os.Exit(0)
+		case "result":
+			c.Result()
 		default:
-			if input, err := strconv.Atoi(text); err == nil {
-				c.Bid(int32(input))
-			} else {
-				fmt.Println("NOT A NUMBER!!!")
-			}
+			c.Bid(text)
 		}
 	}
 }
+
 func Run() {
 	conn, err := grpc.NewClient("localhost:5050", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {

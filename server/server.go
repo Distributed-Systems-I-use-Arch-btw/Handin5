@@ -3,28 +3,38 @@ package server
 import (
 	proto "Handin5/grpc"
 	"context"
-	"errors"
 	"google.golang.org/grpc"
 	"log"
 	"net"
+	"strconv"
 )
 
 type Server struct {
 	proto.UnimplementedAuctionServer
 	nrClients  int32
+	isover     bool
 	highestBid int32
 }
 
-func (s *Server) Bid(ctx context.Context, in *proto.Amount) (*proto.Ack, error) {
-	curMessage := in.Amount
+func (s *Server) Results(ctx context.Context, in *proto.Empty) (*proto.Result, error) {
+	return &proto.Result{Isover: s.isover, Highestbid: s.highestBid}, nil
+}
 
-	if curMessage <= 0 { //YOU BID NO MANIES
-		return &proto.Ack{Ack: "CHANGE THIS !!!!"}, errors.New("message longer than 128 characters")
-	} else if curMessage <= s.highestBid {
-		s.highestBid = curMessage
+func (s *Server) Bid(ctx context.Context, in *proto.Amount) (*proto.Ack, error) {
+	bidString := in.Amount
+	currentBid, err := strconv.Atoi(bidString)
+	if err != nil {
+		return &proto.Ack{Ack: "Exception"}, nil
 	}
 
-	return &proto.Ack{Ack: "CHANGE THIS !!!!"}, nil
+	currentBidInt32 := int32(currentBid)
+
+	if currentBidInt32 <= s.highestBid {
+		return &proto.Ack{Ack: "Fail"}, nil
+	}
+
+	s.highestBid = currentBidInt32
+	return &proto.Ack{Ack: "Success"}, nil
 }
 
 func (s *Server) CreateClientIdentifier(ctx context.Context, in *proto.Empty) (*proto.ClientId, error) {

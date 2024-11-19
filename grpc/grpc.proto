@@ -8,7 +8,7 @@ message ClientId {
 }
 
 message Amount {
-  int32 amount = 1;
+  string amount = 1;
 }
 
 message Ack {
