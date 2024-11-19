@@ -10,6 +10,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"time"
 )
 
 type clients struct {
@@ -23,7 +24,10 @@ type clientInfo struct {
 func (c *clientInfo) Result(ctx context.Context, resultChan chan string, wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	outcome, _ := c.client.Results(context.Background(), &proto.Empty{})
+	outcome, err := c.client.Results(context.Background(), &proto.Empty{})
+	if err != nil {
+		return
+	}
 
 	select {
 	case <-ctx.Done():
@@ -53,12 +57,19 @@ func (c *clients) fetchResults() {
 	case result := <-resultChan:
 		fmt.Println(result)
 		cancel()
+	case <-time.After(5 * time.Second):
+		fmt.Println("No servers responded within the timeout period.")
+		os.Exit(0)
 	}
+
+	wg.Wait()
 }
 
 func (c *clientInfo) Bid(amount string) {
-
-	ack, _ := c.client.Bid(context.Background(), &proto.Amount{Amount: amount})
+	ack, err := c.client.Bid(context.Background(), &proto.Amount{Amount: amount})
+	if err != nil {
+		return
+	}
 	if ack.Ack == "Exception" {
 		fmt.Println("Not valid input")
 	}
@@ -95,7 +106,9 @@ func Run() {
 	var client proto.AuctionClient
 
 	for _, port := range ports {
-		conn, err = grpc.NewClient(fmt.Sprintf("localhost:%d", port), grpc.WithTransportCredentials(insecure.NewCredentials()))
+		conn, err = grpc.NewClient(fmt.Sprintf(
+			"localhost:%d", port),
+			grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			continue
 		}
@@ -104,10 +117,21 @@ func Run() {
 
 		clients.clients = append(clients.clients, &clientInfo{client: client})
 	}
+	if len(clients.clients) == 0 {
+		fmt.Println("No servers are available. Exiting.")
+		os.Exit(1)
+	}
 
-	for _, client := range clients.clients {
-		var clientId *proto.ClientId
-		clientId, _ = client.client.CreateClientIdentifier(context.Background(), &proto.Empty{})
+	//var clientId *proto.ClientId
+
+	for i := 0; i < len(clients.clients); i++ {
+		client := clients.clients[i]
+		clientId, err := client.client.CreateClientIdentifier(context.Background(), &proto.Empty{})
+		if err != nil {
+			clients.clients = append(clients.clients[:i], clients.clients[i+1:]...)
+			i--
+			continue
+		}
 		client.clientId = clientId.Clientid
 	}
 

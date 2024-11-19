@@ -15,10 +15,11 @@ type Server struct {
 	nrClients  int32
 	highestBid int32
 	isOver     bool
+	isAuction  bool
 }
 
 func (s *Server) timer() {
-	time.Sleep(2 * time.Minute)
+	time.Sleep(10 * time.Minute)
 	s.isOver = true
 }
 
@@ -27,6 +28,10 @@ func (s *Server) Results(ctx context.Context, in *proto.Empty) (*proto.Result, e
 }
 
 func (s *Server) Bid(ctx context.Context, in *proto.Amount) (*proto.Ack, error) {
+	if !s.isAuction {
+		s.isAuction = true
+		go s.timer()
+	}
 	if s.isOver {
 		return &proto.Ack{Ack: "Exception"}, nil
 	}
@@ -58,6 +63,7 @@ func Run(myPort int) {
 		nrClients:  0,
 		highestBid: 0,
 		isOver:     false,
+		isAuction:  false,
 	}
 
 	server.start_server(myPort)
@@ -74,8 +80,6 @@ func (s *Server) start_server(myPort int) {
 	fmt.Printf("Server started on port: %d \n", myPort)
 
 	proto.RegisterAuctionServer(gRPCserver, s)
-
-	go s.timer()
 
 	err = gRPCserver.Serve(netListener)
 	if err != nil {
