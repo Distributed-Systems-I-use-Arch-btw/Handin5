@@ -7,20 +7,30 @@ import (
 	"log"
 	"net"
 	"strconv"
+	"time"
 )
 
 type Server struct {
 	proto.UnimplementedAuctionServer
 	nrClients  int32
-	isover     bool
 	highestBid int32
+	isOver     bool
+}
+
+func (s *Server) timer() {
+	time.Sleep(2 * time.Minute)
+	s.isOver = true
 }
 
 func (s *Server) Results(ctx context.Context, in *proto.Empty) (*proto.Result, error) {
-	return &proto.Result{Isover: s.isover, Highestbid: s.highestBid}, nil
+	return &proto.Result{Isover: s.isOver, Highestbid: s.highestBid}, nil
 }
 
 func (s *Server) Bid(ctx context.Context, in *proto.Amount) (*proto.Ack, error) {
+	if s.isOver {
+		return &proto.Ack{Ack: "Exception"}, nil
+	}
+
 	bidString := in.Amount
 	currentBid, err := strconv.Atoi(bidString)
 	if err != nil {
@@ -47,6 +57,7 @@ func Run() {
 	server := &Server{
 		nrClients:  0,
 		highestBid: 0,
+		isOver:     false,
 	}
 
 	server.start_server()
@@ -64,6 +75,8 @@ func (s *Server) start_server() {
 	}
 
 	proto.RegisterAuctionServer(gRPCserver, s)
+
+	go s.timer()
 
 	err = gRPCserver.Serve(netListener)
 	if err != nil {

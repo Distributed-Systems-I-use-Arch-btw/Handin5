@@ -5,12 +5,11 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"log"
 	"os"
 	"strings"
-
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 type clientInfo struct {
@@ -31,6 +30,7 @@ func (c *clientInfo) Result() {
 }
 
 func (c *clientInfo) Bid(amount string) {
+
 	ack, _ := c.client.Bid(context.Background(), &proto.Amount{Amount: amount})
 	if ack.Ack == "Exception" {
 		fmt.Println("Not valid input")
