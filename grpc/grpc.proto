@@ -1,0 +1,27 @@
+syntax = "proto3";
+option go_package = "ChittyChat/gRPC/proto";
+
+message Empty {}
+
+message ClientId {
+  int32 clientid = 1;
+}
+
+message Amount {
+  int32 amount = 1;
+}
+
+message Ack {
+  string ack = 1;
+}
+
+message Result {
+  bool isover = 1;
+  int32 highestbid = 2;
+}
+
+service Auction {
+  rpc Bid (Amount) returns (Ack) {};
+  rpc Results (Empty) returns (Result) {};
+  rpc CreateClientIdentifier (Empty) returns (ClientId) {};
+}
