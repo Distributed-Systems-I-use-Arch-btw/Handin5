@@ -39,9 +39,9 @@ func (c *clientInfo) Result(ctx context.Context, resultChan chan string, wg *syn
 		c.logger.Printf("Client, %d, got the result, all over responses are ignored\n", c.clientId)
 
 		if outcome.Isover {
-			resultChan <- fmt.Sprintf("Auction is over! 🔨\nHighest bid was: %d", outcome.Highestbid)
+			resultChan <- fmt.Sprintf("Auction is over! 🔨\nHighest bid was: %d by %d", outcome.Highestbid, outcome.Clientid)
 		} else {
-			resultChan <- fmt.Sprintf("Auction is still going...\nHighest bid is: %d", outcome.Highestbid)
+			resultChan <- fmt.Sprintf("Auction is still going...\nHighest bid is: %d by %d", outcome.Highestbid, outcome.Clientid)
 		}
 	}
 }
@@ -77,7 +77,10 @@ func (c *clients) fetchResults() {
 }
 
 func (c *clientInfo) Bid(amount string) {
-	ack, err := c.client.Bid(context.Background(), &proto.Amount{Amount: amount})
+	ack, err := c.client.Bid(context.Background(), 
+	&proto.BidPackage {
+		Amount: &proto.Amount{Amount: amount},
+		Clientid: &proto.ClientId{ Clientid: c.clientId},})
 	if err != nil {
 		return
 	}

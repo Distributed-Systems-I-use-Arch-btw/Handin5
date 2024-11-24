@@ -11,6 +11,11 @@ message Amount {
   string amount = 1;
 }
 
+message BidPackage {
+  Amount amount = 1;
+  ClientId clientid = 2;
+}
+
 message Ack {
   string ack = 1;
 }
@@ -18,10 +23,11 @@ message Ack {
 message Result {
   bool isover = 1;
   int32 highestbid = 2;
+  int32 clientid = 3;
 }
 
 service Auction {
-  rpc Bid (Amount) returns (Ack) {};
+  rpc Bid (BidPackage) returns (Ack) {};
   rpc Results (Empty) returns (Result) {};
   rpc CreateClientIdentifier (Empty) returns (ClientId) {};
 }

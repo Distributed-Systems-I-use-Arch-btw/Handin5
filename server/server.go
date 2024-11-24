@@ -10,14 +10,18 @@ import (
 	"os"
 	"strconv"
 	"time"
+	"syscall"
+	"os/signal"
 )
 
 type Server struct {
 	proto.UnimplementedAuctionServer
 	nrClients  int32
 	highestBid int32
+	higestBidder	int32
 	isOver     bool
 	isAuction  bool
+	myPort	   int32
 	logger     *log.Logger
 }
 
@@ -27,10 +31,10 @@ func (s *Server) timer() {
 }
 
 func (s *Server) Results(ctx context.Context, in *proto.Empty) (*proto.Result, error) {
-	return &proto.Result{Isover: s.isOver, Highestbid: s.highestBid}, nil
+	return &proto.Result{Isover: s.isOver, Highestbid: s.highestBid, Clientid: s.higestBidder}, nil
 }
 
-func (s *Server) Bid(ctx context.Context, in *proto.Amount) (*proto.Ack, error) {
+func (s *Server) Bid(ctx context.Context, in *proto.BidPackage) (*proto.Ack, error) {
 	if !s.isAuction {
 		s.isAuction = true
 		go s.timer()
@@ -38,8 +42,8 @@ func (s *Server) Bid(ctx context.Context, in *proto.Amount) (*proto.Ack, error) 
 	if s.isOver {
 		return &proto.Ack{Ack: "Exception"}, nil
 	}
-
-	bidString := in.Amount
+	s.higestBidder = in.Clientid.Clientid
+	bidString := in.Amount.Amount
 	currentBid, err := strconv.Atoi(bidString)
 	if err != nil {
 		return &proto.Ack{Ack: "Exception"}, nil
@@ -65,7 +69,16 @@ func (s *Server) CreateClientIdentifier(ctx context.Context, in *proto.Empty) (*
 	return &proto.ClientId{Clientid: s.nrClients}, nil
 }
 
+var sigChan = make(chan os.Signal, 1)
+
+func (s *Server) Disconnect() {
+	<-sigChan
+	log.Fatalf("Server with port %d has been shutdown", s.myPort)
+	os.Exit(0)
+}
+
 func Run(myPort int) {
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 	logFile, err := os.OpenFile("log.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
 	if err != nil {
 		log.Fatalf("error opening file: %v", err)
@@ -78,9 +91,11 @@ func Run(myPort int) {
 		highestBid: 0,
 		isOver:     false,
 		isAuction:  false,
+		myPort: 	int32(myPort),
 		logger:     logger,
 	}
 
+	server.Disconnect()
 	server.start_server(myPort)
 }
 
