@@ -5,7 +5,9 @@ import (
 	"context"
 	"fmt"
 	"google.golang.org/grpc"
+	"log"
 	"net"
+	"os"
 	"strconv"
 	"time"
 )
@@ -16,6 +18,7 @@ type Server struct {
 	highestBid int32
 	isOver     bool
 	isAuction  bool
+	logger     *log.Logger
 }
 
 func (s *Server) timer() {
@@ -45,8 +48,12 @@ func (s *Server) Bid(ctx context.Context, in *proto.Amount) (*proto.Ack, error) 
 	currentBidInt32 := int32(currentBid)
 
 	if currentBidInt32 <= s.highestBid {
+		s.logger.Printf("Bid of %d failed\n", currentBidInt32)
+
 		return &proto.Ack{Ack: "Fail"}, nil
 	}
+
+	s.logger.Printf("Bid of %d was a success\n", currentBidInt32)
 
 	s.highestBid = currentBidInt32
 	return &proto.Ack{Ack: "Success"}, nil
@@ -59,11 +66,19 @@ func (s *Server) CreateClientIdentifier(ctx context.Context, in *proto.Empty) (*
 }
 
 func Run(myPort int) {
+	logFile, err := os.OpenFile("log.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+	if err != nil {
+		log.Fatalf("error opening file: %v", err)
+	}
+
+	logger := log.New(logFile, "", log.LstdFlags)
+
 	server := &Server{
 		nrClients:  0,
 		highestBid: 0,
 		isOver:     false,
 		isAuction:  false,
+		logger:     logger,
 	}
 
 	server.start_server(myPort)
@@ -78,6 +93,8 @@ func (s *Server) start_server(myPort int) {
 	}
 
 	fmt.Printf("Server started on port: %d \n", myPort)
+
+	s.logger.Printf("Server started on port: %d \n", myPort)
 
 	proto.RegisterAuctionServer(gRPCserver, s)
 

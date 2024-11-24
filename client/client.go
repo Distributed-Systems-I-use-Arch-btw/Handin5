@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"log"
 	"os"
 	"strings"
 	"sync"
@@ -16,9 +17,11 @@ import (
 type clients struct {
 	clients []*clientInfo
 }
+
 type clientInfo struct {
 	client   proto.AuctionClient
 	clientId int32
+	logger   *log.Logger
 }
 
 func (c *clientInfo) Result(ctx context.Context, resultChan chan string, wg *sync.WaitGroup) {
@@ -33,6 +36,8 @@ func (c *clientInfo) Result(ctx context.Context, resultChan chan string, wg *syn
 	case <-ctx.Done():
 		return
 	default:
+		c.logger.Printf("Client, %d, got the result, all over responses are ignored\n", c.clientId)
+
 		if outcome.Isover {
 			resultChan <- fmt.Sprintf("Auction is over! 🔨\nHighest bid was: %d", outcome.Highestbid)
 		} else {
@@ -51,6 +56,8 @@ func (c *clients) fetchResults() {
 	for _, client := range c.clients {
 		wg.Add(1)
 		go client.Result(ctx, resultChan, &wg)
+
+		client.logger.Printf("Client, %d, asked its server for the result\n", client.clientId)
 	}
 
 	select {
@@ -58,6 +65,10 @@ func (c *clients) fetchResults() {
 		fmt.Println(result)
 		cancel()
 	case <-time.After(5 * time.Second):
+		for _, client := range c.clients {
+			client.logger.Println("No servers responded within the timeout period, shutting down...")
+		}
+
 		fmt.Println("No servers responded within the timeout period.")
 		os.Exit(0)
 	}
@@ -86,12 +97,16 @@ func (c *clients) Scanner() {
 
 		switch text {
 		case "exit":
+			for _, client := range c.clients {
+				client.logger.Printf("Client, %s, shut down\n", client.clientId)
+			}
 			os.Exit(0)
 		case "result":
 			c.fetchResults()
 		default:
 			for _, client := range c.clients {
 				go client.Bid(text)
+				client.logger.Printf("Client, %d, sent the bid, %d, to its server\n", client.clientId, text)
 			}
 		}
 	}
@@ -105,6 +120,13 @@ func Run() {
 	var err error
 	var client proto.AuctionClient
 
+	logFile, err := os.OpenFile("log.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+	if err != nil {
+		log.Fatalf("error opening file: %v", err)
+	}
+
+	logger := log.New(logFile, "", log.LstdFlags)
+
 	for _, port := range ports {
 		conn, err = grpc.NewClient(fmt.Sprintf(
 			"localhost:%d", port),
@@ -115,14 +137,15 @@ func Run() {
 
 		client = proto.NewAuctionClient(conn)
 
-		clients.clients = append(clients.clients, &clientInfo{client: client})
+		clients.clients = append(clients.clients, &clientInfo{
+			client: client,
+			logger: logger,
+		})
 	}
 	if len(clients.clients) == 0 {
 		fmt.Println("No servers are available. Exiting.")
 		os.Exit(1)
 	}
-
-	//var clientId *proto.ClientId
 
 	for i := 0; i < len(clients.clients); i++ {
 		client := clients.clients[i]
@@ -133,6 +156,8 @@ func Run() {
 			continue
 		}
 		client.clientId = clientId.Clientid
+
+		logger.Printf("Client, %d, has connected to a server on port %d\n", clientId.Clientid, ports[i])
 	}
 
 	clients.Scanner()
