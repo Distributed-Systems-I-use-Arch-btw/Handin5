@@ -36,12 +36,12 @@ func (c *clientInfo) Result(ctx context.Context, resultChan chan string, wg *syn
 	case <-ctx.Done():
 		return
 	default:
-		c.logger.Printf("Client, %d, got the result, all over responses are ignored\n", c.clientId)
+		c.logger.Printf("Client, %d, got the result, all other responses are ignored\n", c.clientId)
 
 		if outcome.Isover {
-			resultChan <- fmt.Sprintf("Auction is over! 🔨\nHighest bid was: %d by %d", outcome.Highestbid, outcome.Clientid)
+			resultChan <- fmt.Sprintf("Auction is over! 🔨\nHighest bid was: %d by client: %d", outcome.Highestbid, outcome.Clientid)
 		} else {
-			resultChan <- fmt.Sprintf("Auction is still going...\nHighest bid is: %d by %d", outcome.Highestbid, outcome.Clientid)
+			resultChan <- fmt.Sprintf("Auction is still going...\nHighest bid is: %d by client: %d", outcome.Highestbid, outcome.Clientid)
 		}
 	}
 }
@@ -50,7 +50,7 @@ func (c *clients) fetchResults() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	resultChan := make(chan string, 1)
+	resultChan := make(chan string, len(c.clients))
 	var wg sync.WaitGroup
 
 	for _, client := range c.clients {
@@ -74,13 +74,14 @@ func (c *clients) fetchResults() {
 	}
 
 	wg.Wait()
+	close(resultChan)
 }
 
 func (c *clientInfo) Bid(amount string) {
-	ack, err := c.client.Bid(context.Background(), 
-	&proto.BidPackage {
-		Amount: &proto.Amount{Amount: amount},
-		Clientid: &proto.ClientId{ Clientid: c.clientId},})
+	ack, err := c.client.Bid(context.Background(),
+		&proto.BidPackage{
+			Amount:   &proto.Amount{Amount: amount},
+			Clientid: &proto.ClientId{Clientid: c.clientId}})
 	if err != nil {
 		return
 	}

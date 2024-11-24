@@ -1,0 +1,71 @@
+2024/11/25 00:28:22 Server started on port: 5050 
+2024/11/25 00:28:23 Server started on port: 5051 
+2024/11/25 00:28:25 Server started on port: 5052 
+2024/11/25 00:28:27 Client, 1, has connected to a server on port 5050
+2024/11/25 00:28:27 Client, 1, has connected to a server on port 5051
+2024/11/25 00:28:27 Client, 1, has connected to a server on port 5052
+2024/11/25 00:28:27 Client, 2, has connected to a server on port 5050
+2024/11/25 00:28:27 Client, 2, has connected to a server on port 5051
+2024/11/25 00:28:27 Client, 2, has connected to a server on port 5052
+2024/11/25 00:28:30 Client, 1, asked its server for the result
+2024/11/25 00:28:30 Client, 1, asked its server for the result
+2024/11/25 00:28:30 Client, 1, asked its server for the result
+2024/11/25 00:28:30 Client, 1, got the result, all other responses are ignored
+2024/11/25 00:28:30 Client, 1, got the result, all other responses are ignored
+2024/11/25 00:28:30 Client, 1, got the result, all other responses are ignored
+2024/11/25 00:28:33 Client, 2, asked its server for the result
+2024/11/25 00:28:33 Client, 2, asked its server for the result
+2024/11/25 00:28:33 Client, 2, asked its server for the result
+2024/11/25 00:28:33 Client, 2, got the result, all other responses are ignored
+2024/11/25 00:28:33 Client, 2, got the result, all other responses are ignored
+2024/11/25 00:28:36 Client, 1, sent the bid, %!d(string=5), to its server
+2024/11/25 00:28:36 Client, 1, sent the bid, %!d(string=5), to its server
+2024/11/25 00:28:36 Bid of 5 was a success
+2024/11/25 00:28:36 Client, 1, sent the bid, %!d(string=5), to its server
+2024/11/25 00:28:36 Bid of 5 was a success
+2024/11/25 00:28:36 Bid of 5 was a success
+2024/11/25 00:28:37 Client, 1, asked its server for the result
+2024/11/25 00:28:37 Client, 1, asked its server for the result
+2024/11/25 00:28:37 Client, 1, asked its server for the result
+2024/11/25 00:28:37 Client, 1, got the result, all other responses are ignored
+2024/11/25 00:28:37 Client, 1, got the result, all other responses are ignored
+2024/11/25 00:28:37 Client, 1, got the result, all other responses are ignored
+2024/11/25 00:28:41 Client, 2, asked its server for the result
+2024/11/25 00:28:41 Client, 2, asked its server for the result
+2024/11/25 00:28:41 Client, 2, asked its server for the result
+2024/11/25 00:28:41 Client, 2, got the result, all other responses are ignored
+2024/11/25 00:28:41 Client, 2, got the result, all other responses are ignored
+2024/11/25 00:28:45 Client, 2, sent the bid, %!d(string=10), to its server
+2024/11/25 00:28:45 Client, 2, sent the bid, %!d(string=10), to its server
+2024/11/25 00:28:45 Bid of 10 was a success
+2024/11/25 00:28:45 Client, 2, sent the bid, %!d(string=10), to its server
+2024/11/25 00:28:45 Bid of 10 was a success
+2024/11/25 00:28:45 Bid of 10 was a success
+2024/11/25 00:28:49 Client, 2, asked its server for the result
+2024/11/25 00:28:49 Client, 2, asked its server for the result
+2024/11/25 00:28:49 Client, 2, asked its server for the result
+2024/11/25 00:28:49 Client, 2, got the result, all other responses are ignored
+2024/11/25 00:28:49 Client, 2, got the result, all other responses are ignored
+2024/11/25 00:28:49 Client, 2, got the result, all other responses are ignored
+2024/11/25 00:28:52 Client, 1, asked its server for the result
+2024/11/25 00:28:52 Client, 1, asked its server for the result
+2024/11/25 00:28:52 Client, 1, asked its server for the result
+2024/11/25 00:28:52 Client, 1, got the result, all other responses are ignored
+2024/11/25 00:28:52 Client, 1, got the result, all other responses are ignored
+2024/11/25 00:28:52 Client, 1, got the result, all other responses are ignored
+2024/11/25 00:28:57 Server with port 5051 has been shutdown
+2024/11/25 00:28:59 Client, 1, sent the bid, %!d(string=15), to its server
+2024/11/25 00:28:59 Bid of 15 was a success
+2024/11/25 00:28:59 Client, 1, sent the bid, %!d(string=15), to its server
+2024/11/25 00:28:59 Client, 1, sent the bid, %!d(string=15), to its server
+2024/11/25 00:28:59 Bid of 15 was a success
+2024/11/25 00:29:02 Client, 1, asked its server for the result
+2024/11/25 00:29:02 Client, 1, asked its server for the result
+2024/11/25 00:29:02 Client, 1, asked its server for the result
+2024/11/25 00:29:02 Client, 1, got the result, all other responses are ignored
+2024/11/25 00:29:02 Client, 1, got the result, all other responses are ignored
+2024/11/25 00:29:05 Client, 2, asked its server for the result
+2024/11/25 00:29:05 Client, 2, asked its server for the result
+2024/11/25 00:29:05 Client, 2, asked its server for the result
+2024/11/25 00:29:05 Client, 2, got the result, all other responses are ignored
+2024/11/25 00:29:05 Client, 2, got the result, all other responses are ignored

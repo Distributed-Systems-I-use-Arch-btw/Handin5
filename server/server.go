@@ -8,21 +8,21 @@ import (
 	"log"
 	"net"
 	"os"
-	"strconv"
-	"time"
-	"syscall"
 	"os/signal"
+	"strconv"
+	"syscall"
+	"time"
 )
 
 type Server struct {
 	proto.UnimplementedAuctionServer
-	nrClients  int32
-	highestBid int32
-	higestBidder	int32
-	isOver     bool
-	isAuction  bool
-	myPort	   int32
-	logger     *log.Logger
+	nrClients    int32
+	highestBid   int32
+	higestBidder int32
+	isOver       bool
+	isAuction    bool
+	myPort       int32
+	logger       *log.Logger
 }
 
 func (s *Server) timer() {
@@ -73,6 +73,9 @@ var sigChan = make(chan os.Signal, 1)
 
 func (s *Server) Disconnect() {
 	<-sigChan
+
+	s.logger.Printf("Server with port %d has been shutdown", s.myPort)
+
 	log.Fatalf("Server with port %d has been shutdown", s.myPort)
 	os.Exit(0)
 }
@@ -91,11 +94,11 @@ func Run(myPort int) {
 		highestBid: 0,
 		isOver:     false,
 		isAuction:  false,
-		myPort: 	int32(myPort),
+		myPort:     int32(myPort),
 		logger:     logger,
 	}
 
-	server.Disconnect()
+	go server.Disconnect()
 	server.start_server(myPort)
 }
 
