@@ -29,7 +29,7 @@ When you have the desired number of clients, you can place bets by typing the de
 or ask for the state of the auction writing:
 
 ```bash
-  300
+  result
 ```
 
 Happy auctioning. 🤠👌  
